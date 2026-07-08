@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RAG Agent</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+  <header class="border-b bg-white">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded bg-indigo-600 text-white flex items-center justify-center font-bold">R</div>
+        <div>
+          <h1 class="font-semibold leading-tight">RAG Agent</h1>
+          <p class="text-xs text-slate-500 leading-tight">Document Q&amp;A · Gemini + ChromaDB</p>
+        </div>
+      </div>
+      <nav class="flex gap-1" id="tabs">
+        <button data-tab="chat" class="tab-btn">Chat</button>
+        <button data-tab="documents" class="tab-btn">Documents</button>
+        <button data-tab="monitoring" class="tab-btn">Monitoring</button>
+        <button data-tab="traces" class="tab-btn">Traces</button>
+        <button data-tab="eval" class="tab-btn">Eval</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-6">
+
+    <!-- CHAT TAB -->
+    <section id="tab-chat" class="tab-panel">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2 bg-white rounded-lg border p-4 flex flex-col h-[70vh]">
+          <div id="chat-log" class="flex-1 overflow-y-auto space-y-4 pr-1"></div>
+          <form id="chat-form" class="mt-3 flex gap-2">
+            <input id="chat-input" type="text" placeholder="Ask a question about your documents..."
+                   class="flex-1 border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm hover:bg-indigo-700">Ask</button>
+          </form>
+        </div>
+        <aside class="bg-white rounded-lg border p-4 text-sm">
+          <h3 class="font-semibold mb-2">How this works</h3>
+          <ol class="list-decimal list-inside space-y-1 text-slate-600">
+            <li>Upload files in the Documents tab</li>
+            <li>Text is chunked and embedded into ChromaDB</li>
+            <li>Your question retrieves the top matching chunks</li>
+            <li>Gemini answers using only those chunks, with citations</li>
+          </ol>
+          <p class="mt-3 text-slate-500">Every answer is logged with latency, token usage, and estimated cost — see the Monitoring and Traces tabs.</p>
+        </aside>
+      </div>
+    </section>
+
+    <!-- DOCUMENTS TAB -->
+    <section id="tab-documents" class="tab-panel hidden">
+      <div class="bg-white rounded-lg border p-4 mb-4">
+        <h3 class="font-semibold mb-2">Upload a document</h3>
+        <p class="text-xs text-slate-500 mb-3">Supported: PDF, DOCX, TXT, MD</p>
+        <form id="upload-form" class="flex items-center gap-3">
+          <input id="upload-input" type="file" accept=".pdf,.docx,.txt,.md" class="text-sm" />
+          <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm hover:bg-indigo-700">Upload</button>
+          <span id="upload-status" class="text-sm text-slate-500"></span>
+        </form>
+      </div>
+      <div class="bg-white rounded-lg border">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-slate-500 text-xs uppercase">
+            <tr>
+              <th class="text-left px-4 py-2">Filename</th>
+              <th class="text-left px-4 py-2">Uploaded</th>
+              <th class="text-left px-4 py-2">Chunks</th>
+              <th class="text-left px-4 py-2">Size</th>
+              <th class="px-4 py-2"></th>
+            </tr>
+          </thead>
+          <tbody id="documents-table"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- MONITORING TAB -->
+    <section id="tab-monitoring" class="tab-panel hidden">
+      <div id="stat-tiles" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4"></div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="bg-white rounded-lg border p-4">
+          <h3 class="font-semibold mb-2 text-sm">Queries per hour (last 24h)</h3>
+          <canvas id="chart-volume" height="200"></canvas>
+        </div>
+        <div class="bg-white rounded-lg border p-4">
+          <h3 class="font-semibold mb-2 text-sm">Avg latency per hour (ms)</h3>
+          <canvas id="chart-latency" height="200"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- TRACES TAB -->
+    <section id="tab-traces" class="tab-panel hidden">
+      <div class="bg-white rounded-lg border overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-slate-500 text-xs uppercase">
+            <tr>
+              <th class="text-left px-4 py-2">Time</th>
+              <th class="text-left px-4 py-2">Kind</th>
+              <th class="text-left px-4 py-2">Question</th>
+              <th class="text-left px-4 py-2">Model</th>
+              <th class="text-left px-4 py-2">Tokens (in/out)</th>
+              <th class="text-left px-4 py-2">Cost</th>
+              <th class="text-left px-4 py-2">Latency</th>
+              <th class="text-left px-4 py-2">Status</th>
+            </tr>
+          </thead>
+          <tbody id="traces-table"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- EVAL TAB -->
+    <section id="tab-eval" class="tab-panel hidden">
+      <div class="bg-white rounded-lg border p-4 mb-4 flex items-center justify-between">
+        <div>
+          <h3 class="font-semibold">Eval harness</h3>
+          <p class="text-xs text-slate-500">Runs the gold Q&amp;A set in <code>eval/eval_set.json</code> and grades each answer with an LLM judge.</p>
+        </div>
+        <button id="run-eval-btn" class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm hover:bg-indigo-700">Run Eval</button>
+      </div>
+      <div id="eval-tiles" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4"></div>
+      <div class="bg-white rounded-lg border overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-slate-500 text-xs uppercase">
+            <tr>
+              <th class="text-left px-4 py-2">Question</th>
+              <th class="text-left px-4 py-2">Score</th>
+              <th class="text-left px-4 py-2">Retrieval hit</th>
+              <th class="text-left px-4 py-2">Latency</th>
+              <th class="text-left px-4 py-2">Judge reasoning</th>
+            </tr>
+          </thead>
+          <tbody id="eval-table"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+services:
+  rag-agent:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-3.5-flash}
+    volumes:
+      - rag_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  rag_data:

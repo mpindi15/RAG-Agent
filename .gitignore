@@ -1,0 +1,28 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+.env
+
+# Runtime data (uploaded docs, vector db, sqlite traces) - never commit user data
+data/chroma/*
+!data/chroma/.gitkeep
+data/uploads/*
+!data/uploads/.gitkeep
+data/app.db
+eval/results/*.json
+
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+.DS_Store
+Thumbs.db
+
+# Local dev-server run artifacts
+server.out.log
+server.err.log
+server.pid.txt
+
+# Claude Code local machine settings (permission allowlist, not project config)
+.claude/settings.local.json

@@ -1,0 +1,61 @@
+.tab-btn {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: 0.375rem;
+  color: #475569;
+}
+.tab-btn:hover {
+  background: #f1f5f9;
+}
+.tab-btn.active {
+  background: #4f46e5;
+  color: white;
+}
+
+.chat-bubble-user {
+  background: #4f46e5;
+  color: white;
+  border-radius: 0.75rem 0.75rem 0.1rem 0.75rem;
+  padding: 0.5rem 0.9rem;
+  max-width: 80%;
+  margin-left: auto;
+  font-size: 0.9rem;
+}
+.chat-bubble-assistant {
+  background: #f1f5f9;
+  border-radius: 0.75rem 0.75rem 0.75rem 0.1rem;
+  padding: 0.6rem 0.9rem;
+  max-width: 90%;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+}
+
+.stat-tile {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+}
+.stat-tile .label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.02em;
+}
+.stat-tile .value {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.score-pill {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.score-5, .score-4 { background: #dcfce7; color: #166534; }
+.score-3 { background: #fef9c3; color: #854d0e; }
+.score-2, .score-1 { background: #fee2e2; color: #991b1b; }
+.score-0 { background: #e2e8f0; color: #475569; }

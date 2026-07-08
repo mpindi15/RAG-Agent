@@ -1,0 +1,27 @@
+[
+  {
+    "question": "How many PTO days do full-time employees accrue per year, and can they roll over?",
+    "expected_answer": "18 days per year, accrued quarterly at 4.5 days per quarter. Up to 10 unused days can be carried over into the next year.",
+    "expected_source": "employee_handbook.md"
+  },
+  {
+    "question": "How many days per week can someone work remotely without needing manager approval?",
+    "expected_answer": "Up to 3 days per week without prior approval; fully remote (5 days/week) requires manager sign-off.",
+    "expected_source": "employee_handbook.md"
+  },
+  {
+    "question": "What is the process for reimbursing a $50 business expense?",
+    "expected_answer": "Expenses under $75 can be submitted with a receipt photo via Expensify and are typically reimbursed within 5 business days, no prior approval needed.",
+    "expected_source": "employee_handbook.md"
+  },
+  {
+    "question": "What happens if an employee doesn't complete the annual security training by the deadline?",
+    "expected_answer": "Their VPN access is automatically suspended until they complete the training. The deadline is December 1st.",
+    "expected_source": "employee_handbook.md"
+  },
+  {
+    "question": "How much is the on-call stipend and how quickly must an engineer acknowledge a page?",
+    "expected_answer": "$400 per week stipend, and engineers must acknowledge a page within 15 minutes.",
+    "expected_source": "employee_handbook.md"
+  }
+]
