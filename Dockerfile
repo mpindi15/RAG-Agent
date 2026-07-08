@@ -34,6 +34,10 @@ ENV DATA_DIR=/app/data \
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD curl -f "http://localhost:${PORT:-8000}/health" || exit 1
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Platforms like Render/Railway/Fly inject PORT and require the app to bind
+# to it, overriding the fixed 8000 above (docker-compose doesn't set PORT,
+# so local runs still default to 8000). Shell form is required for the
+# ${PORT:-8000} expansion to happen at container start, not build time.
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
