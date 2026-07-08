@@ -111,6 +111,19 @@ uvicorn app.main:app --reload
 
 Open http://localhost:8000.
 
+### Option C — Render (public demo link)
+
+`render.yaml` is a Render Blueprint spec for the free web-service tier:
+
+1. On [Render](https://render.com), **New +** → **Blueprint** → connect this repo.
+2. Render detects `render.yaml` and prompts for `GEMINI_API_KEY` (kept out of
+   the repo, entered directly in Render's dashboard).
+3. Deploy — you get a public `*.onrender.com` URL.
+
+Free tier notes: the service sleeps after ~15 min idle (cold start ~30-60s on
+the next request), and has no persistent disk, so uploaded documents and
+trace history reset whenever the container restarts.
+
 ### Try it end-to-end
 
 1. **Documents** tab → upload `sample_docs/employee_handbook.md` (or your own PDF/DOCX/TXT/MD).
