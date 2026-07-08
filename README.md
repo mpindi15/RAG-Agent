@@ -141,7 +141,7 @@ All settings are environment variables (see `.env.example`):
 | Variable            | Default              | Notes                                             |
 | -------------------- | --------------------- | -------------------------------------------------- |
 | `GEMINI_API_KEY`     | —                     | required (free tier available)                     |
-| `GEMINI_MODEL`       | `gemini-3.5-flash`    | swap to `gemini-2.5-flash` / `gemini-2.0-flash` if unavailable on your account |
+| `GEMINI_MODEL`       | `gemini-2.5-flash`    | `gemini-3.5-flash` also works but its free tier caps at 20 requests/day |
 | `CHUNK_SIZE`         | `1000`                | characters per chunk                               |
 | `CHUNK_OVERLAP`      | `150`                 | character overlap between chunks                   |
 | `TOP_K`              | `4`                   | chunks retrieved per query                         |

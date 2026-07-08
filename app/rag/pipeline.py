@@ -17,6 +17,17 @@ Cite the excerpt number(s) you used in square brackets, e.g. [1] or [1][3]. \
 If the excerpts don't contain the answer, say so plainly instead of guessing."""
 
 
+class GenerationError(RuntimeError):
+    """Raised when retrieval succeeded but generation failed. Carries the
+    retrieved sources so callers (e.g. eval scoring) can still judge
+    retrieval quality independently of the generation failure, instead of
+    conflating the two."""
+
+    def __init__(self, message: str, sources: list[dict]):
+        super().__init__(message)
+        self.sources = sources
+
+
 @lru_cache
 def _client() -> genai.Client:
     # Cached rather than constructed per call: genai.Client's Models accessor
@@ -92,7 +103,7 @@ def answer_question(question: str, top_k: int | None = None, kind: str = "query"
     )
 
     if error:
-        raise RuntimeError(f"Generation failed: {error}")
+        raise GenerationError(f"Generation failed: {error}", sources)
 
     return {
         "trace_id": trace_id,

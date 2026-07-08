@@ -13,8 +13,7 @@ import uuid
 from pathlib import Path
 
 from app.config import get_settings
-from app.observability.tracing import record_trace
-from app.rag.pipeline import _client, answer_question
+from app.rag.pipeline import GenerationError, _client, answer_question
 
 JUDGE_SCHEMA = {
     "type": "object",
@@ -55,15 +54,22 @@ def run_eval(eval_set_path: str | Path) -> dict:
     cases = json.loads(eval_set_path.read_text(encoding="utf-8"))
 
     results = []
-    for case in cases:
+    for i, case in enumerate(cases):
+        if i > 0:
+            # Each case makes two API calls (generation + judge) back to back;
+            # a short gap keeps a 5-case run under free-tier per-minute limits.
+            time.sleep(1.5)
         t0 = time.perf_counter()
         try:
             outcome = answer_question(case["question"], kind="eval")
             error = None
         except RuntimeError as exc:
+            # GenerationError (raised when retrieval succeeded but generation
+            # didn't) carries the real retrieved sources; a bare RuntimeError
+            # (e.g. from some other failure) won't, so fall back to [].
             outcome = {
                 "answer": "",
-                "sources": [],
+                "sources": getattr(exc, "sources", []) if isinstance(exc, GenerationError) else [],
                 "trace_id": str(uuid.uuid4()),
                 "model": get_settings().gemini_model,
                 "input_tokens": 0,
@@ -97,26 +103,20 @@ def run_eval(eval_set_path: str | Path) -> dict:
                 "error": error,
             }
         )
+        # Note: no record_trace() call here — answer_question() (called with
+        # kind="eval" above) already records the trace itself, on both the
+        # success and RuntimeError paths. Recording it again with the same
+        # trace_id violates the traces.id primary key.
 
-        record_trace(
-            trace_id=outcome["trace_id"],
-            kind="eval",
-            question=case["question"],
-            answer=outcome["answer"],
-            sources=outcome["sources"],
-            model=outcome["model"],
-            input_tokens=outcome["input_tokens"],
-            output_tokens=outcome["output_tokens"],
-            retrieval_ms=0.0,
-            generation_ms=0.0,
-            total_ms=outcome["total_ms"],
-            error=error,
-        )
-
-    scored = [r["score"] for r in results if r["score"] > 0]
+    error_count = sum(1 for r in results if r["error"])
     report = {
         "num_cases": len(results),
-        "avg_score": round(sum(scored) / len(scored), 2) if scored else 0.0,
+        "error_count": error_count,
+        # Averaged over ALL cases, not just the ones that got a real score —
+        # a generation/judge failure counts as 0, not "not counted". Otherwise
+        # a run where 4/5 cases errored out can still report avg_score: 5.0,
+        # which is actively misleading about system health.
+        "avg_score": round(sum(r["score"] for r in results) / len(results), 2) if results else 0.0,
         "retrieval_hit_rate": round(sum(r["retrieval_hit"] for r in results) / len(results), 2)
         if results
         else 0.0,

@@ -26,6 +26,18 @@ function fmtBytes(bytes) {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
+// Parses a fetch Response as JSON, tolerating non-JSON error bodies (e.g. a
+// platform-level "Internal Server Error" plain-text page) so the UI shows a
+// readable message instead of a raw "Unexpected token" parse error.
+async function parseJsonSafe(res) {
+  const raw = await res.text();
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return { detail: raw.slice(0, 200) || `HTTP ${res.status} ${res.statusText}` };
+  }
+}
+
 function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str ?? "";
@@ -59,7 +71,7 @@ chatForm.addEventListener("submit", async (e) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ question }),
     });
-    const data = await res.json();
+    const data = await parseJsonSafe(res);
     if (!res.ok) throw new Error(data.detail || "Request failed");
 
     const sourcesHtml = data.sources.length
@@ -85,7 +97,7 @@ const documentsTable = document.getElementById("documents-table");
 
 async function loadDocuments() {
   const res = await fetch("/api/documents");
-  const docs = await res.json();
+  const docs = await parseJsonSafe(res);
   documentsTable.innerHTML = docs
     .map(
       (d) => `
@@ -119,7 +131,7 @@ uploadForm.addEventListener("submit", async (e) => {
   formData.append("file", file);
   try {
     const res = await fetch("/api/documents/upload", { method: "POST", body: formData });
-    const data = await res.json();
+    const data = await parseJsonSafe(res);
     if (!res.ok) throw new Error(data.detail || "Upload failed");
     uploadStatus.textContent = `Indexed ${data.num_chunks} chunks from ${data.filename}`;
     uploadInput.value = "";
@@ -183,7 +195,7 @@ const tracesTable = document.getElementById("traces-table");
 
 async function loadTraces() {
   const res = await fetch("/api/metrics/traces?limit=50");
-  const data = await res.json();
+  const data = await parseJsonSafe(res);
   tracesTable.innerHTML = data.items
     .map((t) => {
       const status = t.error
@@ -220,6 +232,7 @@ function renderEvalReport(report) {
     statTile("Avg score (1-5)", report.avg_score),
     statTile("Pass rate (&ge;4)", `${(report.pass_rate_at_4 * 100).toFixed(0)}%`),
     statTile("Retrieval hit rate", `${(report.retrieval_hit_rate * 100).toFixed(0)}%`),
+    statTile("Errors", `${report.error_count ?? 0}/${report.num_cases}`),
   ].join("");
 
   evalTable.innerHTML = report.results
@@ -238,7 +251,7 @@ function renderEvalReport(report) {
 
 async function loadLatestEval() {
   const res = await fetch("/api/eval/latest");
-  const data = await res.json();
+  const data = await parseJsonSafe(res);
   renderEvalReport(data);
 }
 
@@ -247,7 +260,7 @@ runEvalBtn.addEventListener("click", async () => {
   runEvalBtn.textContent = "Running…";
   try {
     const res = await fetch("/api/eval/run", { method: "POST" });
-    const data = await res.json();
+    const data = await parseJsonSafe(res);
     if (!res.ok) throw new Error(data.detail || "Eval failed");
     renderEvalReport(data);
   } catch (err) {
