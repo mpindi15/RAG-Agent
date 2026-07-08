@@ -15,7 +15,14 @@ COPY static ./static
 COPY eval ./eval
 COPY sample_docs ./sample_docs
 
-RUN mkdir -p /app/data/chroma /app/data/uploads
+RUN mkdir -p /app/data/chroma /app/data/uploads /app/.cache
+
+# Hosts like Hugging Face Spaces run the container as an arbitrary non-root
+# UID, so the working dir needs to be writable by whoever that turns out to
+# be. HOME is set explicitly because Chroma's embedding model cache resolves
+# via Path.home(), which errors on a UID with no /etc/passwd entry.
+ENV HOME=/app
+RUN chmod -R 777 /app
 
 ENV DATA_DIR=/app/data \
     CHROMA_DIR=/app/data/chroma \
