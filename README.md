@@ -10,6 +10,8 @@ just a model call in a loop.
 
 ![status](https://img.shields.io/badge/status-demo--ready-brightgreen)
 
+![Demo: chat with citations, monitoring, traces, and dark mode](docs/demo.gif)
+
 ## What's inside
 
 | Requirement                          | Where                                                          |

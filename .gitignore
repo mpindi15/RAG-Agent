@@ -23,6 +23,8 @@ Thumbs.db
 server.out.log
 server.err.log
 server.pid.txt
+server_demo.out.log
+server_demo.err.log
 
 # Claude Code local machine settings (permission allowlist, not project config)
 .claude/settings.local.json
