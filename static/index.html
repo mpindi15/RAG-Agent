@@ -4,27 +4,37 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>RAG Agent</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A4%96%3C/text%3E%3C/svg%3E" />
+  <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@13.0.3/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
   <link rel="stylesheet" href="/static/styles.css" />
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen">
-  <header class="border-b bg-white">
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 min-h-screen transition-colors">
+  <header class="border-b dark:border-slate-700 bg-white dark:bg-slate-800">
     <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
       <div class="flex items-center gap-2">
         <div class="w-8 h-8 rounded bg-indigo-600 text-white flex items-center justify-center font-bold">R</div>
         <div>
           <h1 class="font-semibold leading-tight">RAG Agent</h1>
-          <p class="text-xs text-slate-500 leading-tight">Document Q&amp;A · Gemini + ChromaDB</p>
+          <p class="text-xs text-slate-500 dark:text-slate-400 leading-tight">Document Q&amp;A · Gemini + ChromaDB</p>
         </div>
       </div>
-      <nav class="flex gap-1" id="tabs">
-        <button data-tab="chat" class="tab-btn">Chat</button>
-        <button data-tab="documents" class="tab-btn">Documents</button>
-        <button data-tab="monitoring" class="tab-btn">Monitoring</button>
-        <button data-tab="traces" class="tab-btn">Traces</button>
-        <button data-tab="eval" class="tab-btn">Eval</button>
-      </nav>
+      <div class="flex items-center gap-3">
+        <nav class="flex gap-1" id="tabs">
+          <button data-tab="chat" class="tab-btn">Chat</button>
+          <button data-tab="documents" class="tab-btn">Documents</button>
+          <button data-tab="monitoring" class="tab-btn">Monitoring</button>
+          <button data-tab="traces" class="tab-btn">Traces</button>
+          <button data-tab="eval" class="tab-btn">Eval</button>
+        </nav>
+        <button id="theme-toggle" title="Toggle dark mode"
+                class="w-8 h-8 rounded-md border dark:border-slate-600 text-sm hover:bg-slate-100 dark:hover:bg-slate-700">
+          <span id="theme-toggle-icon">🌙</span>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -33,41 +43,46 @@
     <!-- CHAT TAB -->
     <section id="tab-chat" class="tab-panel">
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div class="lg:col-span-2 bg-white rounded-lg border p-4 flex flex-col h-[70vh]">
+        <div class="lg:col-span-2 bg-white dark:bg-slate-800 rounded-lg border dark:border-slate-700 p-4 flex flex-col h-[70vh]">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs text-slate-400 dark:text-slate-500">Ask questions about your uploaded documents</span>
+            <button id="clear-chat-btn" class="text-xs text-slate-500 dark:text-slate-400 hover:underline">Clear conversation</button>
+          </div>
           <div id="chat-log" class="flex-1 overflow-y-auto space-y-4 pr-1"></div>
           <form id="chat-form" class="mt-3 flex gap-2">
             <input id="chat-input" type="text" placeholder="Ask a question about your documents..."
-                   class="flex-1 border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-            <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm hover:bg-indigo-700">Ask</button>
+                   class="flex-1 border dark:border-slate-600 bg-white dark:bg-slate-900 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <button id="chat-submit-btn" type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">Ask</button>
           </form>
         </div>
-        <aside class="bg-white rounded-lg border p-4 text-sm">
+        <aside class="bg-white dark:bg-slate-800 rounded-lg border dark:border-slate-700 p-4 text-sm">
           <h3 class="font-semibold mb-2">How this works</h3>
-          <ol class="list-decimal list-inside space-y-1 text-slate-600">
+          <ol class="list-decimal list-inside space-y-1 text-slate-600 dark:text-slate-300">
             <li>Upload files in the Documents tab</li>
             <li>Text is chunked and embedded into ChromaDB</li>
             <li>Your question retrieves the top matching chunks</li>
             <li>Gemini answers using only those chunks, with citations</li>
           </ol>
-          <p class="mt-3 text-slate-500">Every answer is logged with latency, token usage, and estimated cost — see the Monitoring and Traces tabs.</p>
+          <p class="mt-3 text-slate-500 dark:text-slate-400">Every answer is logged with latency, token usage, and estimated cost — see the Monitoring and Traces tabs. Click a citation like [1] to see the source excerpt it came from.</p>
         </aside>
       </div>
     </section>
 
     <!-- DOCUMENTS TAB -->
     <section id="tab-documents" class="tab-panel hidden">
-      <div class="bg-white rounded-lg border p-4 mb-4">
-        <h3 class="font-semibold mb-2">Upload a document</h3>
-        <p class="text-xs text-slate-500 mb-3">Supported: PDF, DOCX, TXT, MD</p>
-        <form id="upload-form" class="flex items-center gap-3">
-          <input id="upload-input" type="file" accept=".pdf,.docx,.txt,.md" class="text-sm" />
-          <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm hover:bg-indigo-700">Upload</button>
-          <span id="upload-status" class="text-sm text-slate-500"></span>
-        </form>
+      <div class="bg-white dark:bg-slate-800 rounded-lg border dark:border-slate-700 p-4 mb-4">
+        <h3 class="font-semibold mb-2">Upload documents</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Supported: PDF, DOCX, TXT, MD — drag and drop or select multiple files</p>
+        <div id="dropzone"
+             class="border-2 border-dashed dark:border-slate-600 rounded-lg p-6 text-center text-sm text-slate-500 dark:text-slate-400 cursor-pointer hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+          <p>Drop files here, or click to browse</p>
+        </div>
+        <input id="upload-input" type="file" accept=".pdf,.docx,.txt,.md" multiple class="hidden" />
+        <div id="upload-status-list" class="mt-3 space-y-1"></div>
       </div>
-      <div class="bg-white rounded-lg border">
+      <div class="bg-white dark:bg-slate-800 rounded-lg border dark:border-slate-700">
         <table class="w-full text-sm">
-          <thead class="bg-slate-50 text-slate-500 text-xs uppercase">
+          <thead class="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 text-xs uppercase">
             <tr>
               <th class="text-left px-4 py-2">Filename</th>
               <th class="text-left px-4 py-2">Uploaded</th>
@@ -85,11 +100,11 @@
     <section id="tab-monitoring" class="tab-panel hidden">
       <div id="stat-tiles" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4"></div>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div class="bg-white rounded-lg border p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-lg border dark:border-slate-700 p-4">
           <h3 class="font-semibold mb-2 text-sm">Queries per hour (last 24h)</h3>
           <canvas id="chart-volume" height="200"></canvas>
         </div>
-        <div class="bg-white rounded-lg border p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-lg border dark:border-slate-700 p-4">
           <h3 class="font-semibold mb-2 text-sm">Avg latency per hour (ms)</h3>
           <canvas id="chart-latency" height="200"></canvas>
         </div>
@@ -98,9 +113,9 @@
 
     <!-- TRACES TAB -->
     <section id="tab-traces" class="tab-panel hidden">
-      <div class="bg-white rounded-lg border overflow-x-auto">
+      <div class="bg-white dark:bg-slate-800 rounded-lg border dark:border-slate-700 overflow-x-auto">
         <table class="w-full text-sm">
-          <thead class="bg-slate-50 text-slate-500 text-xs uppercase">
+          <thead class="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 text-xs uppercase">
             <tr>
               <th class="text-left px-4 py-2">Time</th>
               <th class="text-left px-4 py-2">Kind</th>
@@ -119,17 +134,17 @@
 
     <!-- EVAL TAB -->
     <section id="tab-eval" class="tab-panel hidden">
-      <div class="bg-white rounded-lg border p-4 mb-4 flex items-center justify-between">
+      <div class="bg-white dark:bg-slate-800 rounded-lg border dark:border-slate-700 p-4 mb-4 flex items-center justify-between">
         <div>
           <h3 class="font-semibold">Eval harness</h3>
-          <p class="text-xs text-slate-500">Runs the gold Q&amp;A set in <code>eval/eval_set.json</code> and grades each answer with an LLM judge.</p>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Runs the gold Q&amp;A set in <code>eval/eval_set.json</code> and grades each answer with an LLM judge.</p>
         </div>
-        <button id="run-eval-btn" class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm hover:bg-indigo-700">Run Eval</button>
+        <button id="run-eval-btn" class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">Run Eval</button>
       </div>
       <div id="eval-tiles" class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4"></div>
-      <div class="bg-white rounded-lg border overflow-x-auto">
+      <div class="bg-white dark:bg-slate-800 rounded-lg border dark:border-slate-700 overflow-x-auto">
         <table class="w-full text-sm">
-          <thead class="bg-slate-50 text-slate-500 text-xs uppercase">
+          <thead class="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 text-xs uppercase">
             <tr>
               <th class="text-left px-4 py-2">Question</th>
               <th class="text-left px-4 py-2">Score</th>
@@ -144,6 +159,8 @@
     </section>
 
   </main>
+
+  <div id="toast-container" class="fixed bottom-4 right-4 space-y-2 z-50"></div>
 
   <script src="/static/app.js"></script>
 </body>

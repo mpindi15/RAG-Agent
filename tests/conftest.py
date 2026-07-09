@@ -1,6 +1,7 @@
 import pytest
 
 from app.config import get_settings
+from app.db import init_db
 
 
 @pytest.fixture(autouse=True)
@@ -12,5 +13,6 @@ def isolate_data_dir(tmp_path, monkeypatch):
     monkeypatch.setenv("UPLOADS_DIR", str(tmp_path / "uploads"))
     monkeypatch.setenv("SQLITE_PATH", str(tmp_path / "app.db"))
     get_settings.cache_clear()
+    init_db()
     yield
     get_settings.cache_clear()

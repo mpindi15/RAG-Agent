@@ -34,6 +34,10 @@ def add_chunks(document_id: str, filename: str, chunks: list[str]) -> None:
     collection.add(ids=ids, documents=chunks, metadatas=metadatas)
 
 
+def has_documents() -> bool:
+    return get_collection().count() > 0
+
+
 def query(question: str, top_k: int) -> list[dict]:
     collection = get_collection()
     if collection.count() == 0:
